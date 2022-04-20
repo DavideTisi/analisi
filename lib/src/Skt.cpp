@@ -60,7 +60,7 @@ template <class TFLOAT, class T> void Skt<TFLOAT,T>::reset(const unsigned int nu
     leff =(numeroTimestepsPerBlocco<lmax || lmax==0)? numeroTimestepsPerBlocco : lmax;
     //numero di timestep su cui fare la media
     ntimesteps=numeroTimestepsPerBlocco;
-    lunghezza_lista=leff*traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)*nbin;
+    lunghezza_lista=leff*traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)*nk;
 
     delete [] lista;
     lista=new TFLOAT [lunghezza_lista];
