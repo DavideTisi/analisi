@@ -10,14 +10,14 @@
 
 
 
-#ifndef GOFRT_H
-#define GOFRT_H
+#ifndef SKT_H
+#define SKT_H
 
 #include "operazionisulista.h"
 #include "calcolamultithread.h"
 
 
-namespace Gofrt_Flags {
+namespace Skt_Flags {
 constexpr int FLAGS = CalcolaMultiThread_Flags::PARALLEL_SPLIT_ATOM |
         CalcolaMultiThread_Flags::PARALLEL_LOOP_TIME |
         CalcolaMultiThread_Flags::PARALLEL_LOOP_AVERAGE |
@@ -26,15 +26,15 @@ constexpr int FLAGS = CalcolaMultiThread_Flags::PARALLEL_SPLIT_ATOM |
 }
 
 template <class TFLOAT, class T>
-class Gofrt : public OperazioniSuLista<Gofrt<TFLOAT,T>,TFLOAT>, public CalcolaMultiThread<Gofrt<TFLOAT,T>, Gofrt_Flags::FLAGS  >
+class Skt : public OperazioniSuLista<Skt<TFLOAT,T>,TFLOAT>, public CalcolaMultiThread<Skt<TFLOAT,T>, Skt_Flags::FLAGS  >
 {
 public:
-    using This = Gofrt<TFLOAT,T>;
-    using CalcolaMultiThread_T = CalcolaMultiThread<This, Gofrt_Flags::FLAGS>;
+    using This = Skt<TFLOAT,T>;
+    using CalcolaMultiThread_T = CalcolaMultiThread<This, Skt_Flags::FLAGS>;
     using CalcolaMultiThread_T::FLAGS;
     using OperazioniSuLista_T = OperazioniSuLista<This,TFLOAT>;
 
-    Gofrt(T *t,
+    Skt(T *t,
           TFLOAT rmin,
           TFLOAT rmax,
           unsigned int nbin,
@@ -43,7 +43,7 @@ public:
           unsigned int skip=1,
 	  unsigned int every=1,
           bool debug=false);
-    ~Gofrt();
+    ~Skt();
     void reset(const unsigned int numeroTimestepsPerBlocco);
     unsigned int numeroTimestepsOltreFineBlocco(unsigned int n_b);
     This & operator =(const This & destra);
@@ -63,19 +63,22 @@ private:
     TFLOAT rmin,rmax,rmax2,rmin2,dr,incr;
     bool debug;
     T * traiettoria;
-    unsigned int nbin,lmax;
+    unsigned int nk,lmax;
+    unsigned int totn ; 
+    TFLOAT dk ; 
+
     using CalcolaMultiThread_T::ntimesteps;
     using CalcolaMultiThread_T::skip;
     using CalcolaMultiThread_T::nthreads;
     using CalcolaMultiThread_T::leff;
-    int gofr_idx(unsigned int ts, unsigned int itype=0, unsigned int r=0) {
-        unsigned int idx= ts   * traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)*nbin
-                         +nbin * itype
-                         +r;
+    int sk_idx(unsigned int ts, unsigned int itype=0, unsigned int k=0) {
+        unsigned int idx= ts   * traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)*nk
+                         +nk * itype
+                         +k;
         return idx;
     }
-    TFLOAT * gofr(unsigned int ts, unsigned int itype=0, unsigned int r=0){
-    unsigned int idx= gofr_idx(ts,itype,r);
+    TFLOAT * sk(unsigned int ts, unsigned int itype=0, unsigned int r=0){
+    unsigned int idx= sk_idx(ts,itype,r);
     if (idx >= lunghezza_lista) {
         std::cerr << "Errore: indice fuori dal range!\n";
         abort();
@@ -106,4 +109,4 @@ private:
 
 };
 
-#endif // GOFRT_H
+#endif // Skt_H

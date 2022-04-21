@@ -28,9 +28,9 @@ template <class TFLOAT,class T> Skt<TFLOAT,T>::Skt(T *t, TFLOAT rmin, TFLOAT rma
 {
     // totn = nkx*nky*nkz;
     dk = (kmax-kmin)/nk
-    dr=(nky-nkx)/nbin;
-    nky2=nky*nky;
-    nkx2=nkx*nkx;
+   // dr=(nky-nkx)/nbin;
+    //nky2=nky*nky;
+    //nkx2=nkx*nkx;
 
 }
 

@@ -158,7 +158,7 @@ int main(int argc, char ** argv)
     boost::program_options::options_description options("Program to analyze of molecular dynamics trajectories, with multithread and MPI block averages.\n\nAllowed options:");
     std::string input,log_input,corr_out,ris_append_out,ifcfile,fononefile,output_conversion;
     int sub_mean_start=0,numero_frame=0,every=1,blocksize=0,elast=0,blocknumber=0,numero_thread,nbins_vel,skip=1,conv_n=20,final=60,stop_acf=0;
-    unsigned int n_seg=0,gofrt=0,read_lines_thread=200,sph=0,buffer_size=10;
+    unsigned int n_seg=0,gofrt=0,read_lines_thread=200,sph=0,buffer_size=10, skt=0 ;
     bool sub_mean=false,test=false,spettro_vibraz=false,velocity_h=false,heat_coeff=false,debug=false,debug2=false,dumpGK=false,msd=false,msd_cm=false,msd_self=false,bench=false,fpe=false;
     double vmax_h=0,cariche[2],dt=5e-3,vicini_r=0.0;
     std::pair<int,double> nk;
@@ -211,6 +211,7 @@ int main(int argc, char ** argv)
 #endif
             ("neighbour",boost::program_options::value<double>(&vicini_r)->default_value(0.0),"calculate the histogram of the neighbours up to the specified distance")
             ("gofrt,g",boost::program_options::value<unsigned int>(&gofrt)->default_value(0),"calculate the distinctive and non distinctive part of the van Hove correlation function -- a dynamical structure factor. Here you set the size in number of bins of every calculated histogram. Note that it calculate an histogram for each value of t. If you put -S 1, you get only the traditional g(r). You have to specify the minimum and maximum value of the distance in the histogram with -F option. Note that if you don't set a lower bound of 0 on the distance the non distinctive (the self) part will show up only after a many timesteps...")
+            ("skt",boost::program_options::value<unsigned int>(&skt)->default_value(0),"calculate the S(q,t)")
             ("spherical-harmonics-correlation,Y",boost::program_options::value<unsigned int>(&sph)->default_value(0),"perform the calculation of the correlation function of the atomic density expanded in spherical harmonics. Note that this is a very heavy computation, first do a small test (for example with a very high -S or a low -s value). Here you have to specify the number of different bins of the considered radial distances, specified with -F. The code will calculate a correlation function for each bin.")
             ("buffer-size",boost::program_options::value<unsigned int>(&buffer_size)->default_value(30),"Buffer size for sh frame values. This is machine dependend and can heavily influence the performance of the code")
             ("lt",boost::program_options::value<unsigned int> (&read_lines_thread)->default_value(200),"parameter to read faster the time series column formatted txt file. It specifies the number of lines to read in one after the other for each thread")
@@ -575,6 +576,41 @@ int main(int argc, char ** argv)
                                              t*ntyp*gofrt+
                                              gofrt*itype+
                                              r);
+                        }
+                        std::cout << "\n";
+                    }
+                    std::cout << "\n\n";
+                }
+
+            }else if (skt >0) {
+                if (factors_input.size()!=4){
+                    throw std::runtime_error("You have to specify the distance and k range with the option -F. In order rmin rmax kmin kmax. \n");
+                }
+                std::cerr << "Calculation of S(k,t) -- Structure factor \n";
+                Traiettoria tr(input);
+                tr.set_pbc_wrap(true); //è necessario impostare le pbc per far funzionare correttamente la distanza delle minime immagini
+
+                MediaBlocchi<Skt<double,Traiettoria>,double,double,double, double,unsigned int,unsigned int,unsigned int, unsigned int,unsigned int, bool>
+                        Sk(&tr,blocknumber);
+                Sk.calcola(factors_input[0],factors_input[1],skt,stop_acf,numero_thread,skip,every,dumpGK);
+                double dk = (factors_input[3]-factors_input[2])/skt
+
+                unsigned int ntyp=tr.get_ntypes()*(tr.get_ntypes()+1);
+                unsigned int tmax=Sk.media()->lunghezza()/skt/ntyp;
+
+                std::cout << Skt.puntatoreCalcolo()->get_columns_description();
+                for (unsigned int t=0;t<tmax;t+=every) {
+                    for (unsigned int k=0;r<skt;k++) {
+                        std::cout << t << " " << k*dk + factors_input[2];
+                        for (unsigned int itype=0;itype<ntyp;itype++) {
+                            std::cout << " "<< Sk.media()->elemento(
+                                             t*ntyp*skt+
+                                             skt*itype+
+                                             k)
+                                      << " "<< Sk.varianza()->elemento(
+                                             t*ntyp*skt+
+                                             skt*itype+
+                                             k);
                         }
                         std::cout << "\n";
                     }
