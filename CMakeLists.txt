@@ -181,6 +181,7 @@ set (ANALISI_LIB
     lib/src/cronometro.C
     lib/src/doubleround.cpp
     lib/src/gofrt.cpp
+    lib/src/Skt.cpp
     lib/src/greenkuboNcomponentionicfluid.cpp
     lib/src/heatfluxts.cpp
     lib/src/interpolator.cpp

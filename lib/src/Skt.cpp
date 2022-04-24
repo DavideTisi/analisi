@@ -22,13 +22,16 @@
 #include "mp.h"
 #endif
 
-template <class TFLOAT,class T> Skt<TFLOAT,T>::Skt(T *t, TFLOAT rmin, TFLOAT rmax ,TFLOAT kmin, TFLOAT kmax, unsigned int nk , unsigned int tmax, unsigned int nthreads, unsigned int skip,unsigned int every, bool debug) :
+template <class TFLOAT,class T> Skt<TFLOAT,T>::Skt(T *t, TFLOAT rmin, TFLOAT rmax ,TFLOAT kmin, TFLOAT kmax, unsigned int nkx ,unsigned int nky ,unsigned int nkz , unsigned int tmax, unsigned int nthreads, unsigned int skip,unsigned int every, bool onlymodule , bool debug) :
     CalcolaMultiThread_T {nthreads, skip, t->get_natoms(), every},
-    traiettoria(t),rmin(rmin),rmax(rmax),kmin(kmin),kmax(kmax),nk(nk), lmax(tmax), debug(debug)
+    traiettoria(t),rmin(rmin),rmax(rmax),kmin(kmin),kmax(kmax),nkx(nkx),nky(nky),nkz(nkz), lmax(tmax), onlymodule(onlymodule), debug(debug)
 {
-    // totn = nkx*nky*nkz;
-    dk = (kmax-kmin)/nk
-   // dr=(nky-nkx)/nbin;
+    //totn = nkx*nky*nkz;
+    dkx = (kmax-kmin)/nkx ;
+    dky = (kmax-kmin)/nky ; 
+    dkz = (kmax-kmin)/nkz ; 
+    nk = nkx*nky*nkz;
+    //dr=(nky-nkx)/nbin;
     //nky2=nky*nky;
     //nkx2=nkx*nkx;
 
@@ -45,7 +48,7 @@ template <class TFLOAT, class T> unsigned int Skt<TFLOAT,T>::numeroTimestepsOltr
 template <class TFLOAT, class T> void Skt<TFLOAT,T>::reset(const unsigned int numeroTimestepsPerBlocco) {
 
     std::stringstream descr;
-    descr << "# The first column is the time difference in timesteps, then you have the bin index. Every column after is followed by the variance. Then you have the following: "<<std::endl;
+    descr << "# The first column is the time difference in timesteps, then you have the kx ky kz index. Every column after is followed by the variance. Then you have the following: "<<std::endl;
     for (unsigned int t1=0;t1<traiettoria->get_ntypes();t1++) {
         for (unsigned int t2=t1;t2<traiettoria->get_ntypes();t2++){
             descr << "#g("<<t1<<", "<<t2<<"), different atom index: "<<get_itype(t1,t2)*2+3<<std::endl;
@@ -67,11 +70,11 @@ template <class TFLOAT, class T> void Skt<TFLOAT,T>::reset(const unsigned int nu
 }
 
 template <class TFLOAT, class T> std::vector<ssize_t> Skt<TFLOAT,T>::get_shape(){
-    return {leff,traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1),nbin};
+    return {leff,traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1),nk};
 }
 template <class TFLOAT, class T> std::vector<ssize_t> Skt<TFLOAT,T>::get_stride(){
-    return {static_cast<long>(traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)*nbin*sizeof(TFLOAT)),
-             static_cast<long>(nbin*sizeof(TFLOAT)), sizeof(TFLOAT)};
+    return {static_cast<long>(traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)*nk*sizeof(TFLOAT)),
+             static_cast<long>(nk*sizeof(TFLOAT)), sizeof(TFLOAT)};
 }
 
 template <class TFLOAT, class T>
@@ -117,13 +120,36 @@ void Skt<TFLOAT,T>::calc_single_th(int t, int imedia, int atom_start, int atom_s
 
             //calcola il quadrato della distanza della minima immagine
             //aggiorna l'istogramma
-            for (size_t k = 0; k < nk; k++)
-            {
-                int k_ = k*dk+kmin ;
-                double kd = k_ * d;
-                th_data_[sk_idx(t,itype,k)]+=sin(kd)/kd
+            if(debug){
+                for (size_t k = 0; k < nk; k++)
+                {
+                    int k_ = k*dkx+kmin ; //BUG in dkx
+                    double kd = k_ * d;
+                    th_data_[sk_idx(t,itype,k)]+=sin(kd)/kd;
+                }
             }
-
+            /* for (size_t k = 0; k < nk; k++)
+                {
+                    int k_ = k*dk+kmin ;
+                    double kd = k_ * d;
+                    th_data_[sk_idx(t,itype,k)] += cos (kd)
+                }*/
+             
+            for (size_t kx = 0; kx < nkx; kx++)
+                {
+                    int kx_ = kx*dkx+kmin ;
+                    for (size_t ky = 0; ky < nky; ky++)
+                    {
+                        int ky_ = ky*dky+kmin ;
+                        for (size_t kz = 0; kz < nkz; kz++)
+                        {
+                            int kz_ = kz*dkz+kmin ;
+                            double arg=kx_*x[0]+ky_*x[1]+kz_*x[2];
+                            //double c=cos(arg);
+                            th_data_[sk_idx(t,itype,kx*nky*nkz+ky*nkz+kz)]+=cos(arg);
+                        }
+                    }
+                } 
         }
     }
 
@@ -149,7 +175,7 @@ void Skt<TFLOAT,T>::calc_end() {
         std::ofstream out(Mp::mpi().outname("Skt.dump"));
 #endif
         for (unsigned int ts=0;ts<leff;ts++) {
-            for (unsigned int r=0;r<nbin;r++){
+            for (unsigned int r=0;r<nk;r++){
                 out << ts<< " "<< r;
                 for (unsigned int itype=0;itype<traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1);itype++){
                     out << " "<< *sk(ts,itype,r);

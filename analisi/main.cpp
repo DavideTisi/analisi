@@ -29,6 +29,7 @@
 #include "msd.h"
 #include "istogrammaatomiraggio.h"
 #include "gofrt.h"
+#include "Skt.h"
 #include <functional>
 #include "correlatorespaziale.h"
 #include "sphericalcorrelations.h"
@@ -590,17 +591,18 @@ int main(int argc, char ** argv)
                 Traiettoria tr(input);
                 tr.set_pbc_wrap(true); //è necessario impostare le pbc per far funzionare correttamente la distanza delle minime immagini
 
-                MediaBlocchi<Skt<double,Traiettoria>,double,double,double, double,unsigned int,unsigned int,unsigned int, unsigned int,unsigned int, bool>
+                MediaBlocchi<Skt<double,Traiettoria>,double,double,double, double,unsigned int,unsigned int,unsigned int,unsigned int,unsigned int, unsigned int,unsigned int, bool,bool>
                         Sk(&tr,blocknumber);
-                Sk.calcola(factors_input[0],factors_input[1],skt,stop_acf,numero_thread,skip,every,dumpGK);
-                double dk = (factors_input[3]-factors_input[2])/skt
+                Sk.calcola(factors_input[0],factors_input[1],factors_input[3],factors_input[2],
+                skt,skt,skt,stop_acf,numero_thread,skip,every,false,dumpGK);
+                double dk = (factors_input[3]-factors_input[2])/skt ;
 
                 unsigned int ntyp=tr.get_ntypes()*(tr.get_ntypes()+1);
                 unsigned int tmax=Sk.media()->lunghezza()/skt/ntyp;
 
-                std::cout << Skt.puntatoreCalcolo()->get_columns_description();
+                std::cout << Sk.puntatoreCalcolo()->get_columns_description();
                 for (unsigned int t=0;t<tmax;t+=every) {
-                    for (unsigned int k=0;r<skt;k++) {
+                    for (unsigned int k=0;k<skt;k++) {
                         std::cout << t << " " << k*dk + factors_input[2];
                         for (unsigned int itype=0;itype<ntyp;itype++) {
                             std::cout << " "<< Sk.media()->elemento(
