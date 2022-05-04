@@ -27,9 +27,27 @@ template <class TFLOAT,class T> Skt<TFLOAT,T>::Skt(T *t, TFLOAT rmin, TFLOAT rma
     traiettoria(t),rmin(rmin),rmax(rmax),kmin(kmin),kmax(kmax),nkx(nkx),nky(nky),nkz(nkz), lmax(tmax), onlymodule(onlymodule), debug(debug)
 {
     //totn = nkx*nky*nkz;
-    dkx = (kmax-kmin)/nkx ;
-    dky = (kmax-kmin)/nky ; 
-    dkz = (kmax-kmin)/nkz ; 
+    if(nkx > 0 ){
+         dkx = (kmax-kmin)/nkx ;
+    }else{
+    nkx = 1 ; 
+    dkx = kmax-kmin ;
+    }
+    
+    if(nky > 0 ){
+         dky = (kmax-kmin)/nky ;
+    }else{
+    nky = 1 ;
+    dky = (kmax-kmin)
+    }
+
+    if(nkz > 0 ){
+         dkz = (kmax-kmin)/nkz ;
+    }else{
+    nkz = 1 ;
+    dkz = (kmax-kmin)
+    }
+ 
     nk = nkx*nky*nkz;
     //dr=(nky-nkx)/nbin;
     //nky2=nky*nky;

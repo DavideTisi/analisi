@@ -602,19 +602,31 @@ int main(int argc, char ** argv)
 
                 std::cout << Sk.puntatoreCalcolo()->get_columns_description();
                 for (unsigned int t=0;t<tmax;t+=every) {
-                    for (unsigned int k=0;k<skt;k++) {
-                        std::cout << t << " " << k*dk + factors_input[2];
-                        for (unsigned int itype=0;itype<ntyp;itype++) {
-                            std::cout << " "<< Sk.media()->elemento(
-                                             t*ntyp*skt+
-                                             skt*itype+
-                                             k)
-                                      << " "<< Sk.varianza()->elemento(
-                                             t*ntyp*skt+
-                                             skt*itype+
-                                             k);
-                        }
-                        std::cout << "\n";
+                    for (unsigned int kx=0;kx<skt;kx++) {
+                        std::cout << t << " " << kx*dk + factors_input[2];
+                        for (unsigned int ky=0;ky<skt;ky++) {
+                            std::cout << " " << ky*dk + factors_input[2] ;
+                            for (unsigned int kz=0;kz<skt;kz++) {
+                               std::cout << " " << kz*dk + factors_input[2] ;
+                               for (unsigned int itype=0;itype<ntyp;itype++) {
+                                   std::cout << " "<< Sk.media()->elemento(
+                                                    t*ntyp*skt*skt*skt +
+                                                      itype* skt*skt*skt +
+                                                              kx*skt*skt +
+                                                                  ky*skt +
+                                                                      kz 
+                                                    )
+                                             << " "<< Sk.varianza()->elemento(
+                                                    t*ntyp*skt*skt*skt +
+                                                      itype* skt*skt*skt +
+                                                              kx*skt*skt +
+                                                                  ky*skt +
+                                                                      kz 
+                                                    );
+                               }
+                               std::cout << "\n";
+                            }
+                        }      
                     }
                     std::cout << "\n\n";
                 }
