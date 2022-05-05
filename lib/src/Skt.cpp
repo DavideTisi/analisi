@@ -38,14 +38,14 @@ template <class TFLOAT,class T> Skt<TFLOAT,T>::Skt(T *t, TFLOAT rmin, TFLOAT rma
          dky = (kmax-kmin)/nky ;
     }else{
     nky = 1 ;
-    dky = (kmax-kmin)
+    dky = (kmax-kmin);
     }
 
     if(nkz > 0 ){
          dkz = (kmax-kmin)/nkz ;
     }else{
     nkz = 1 ;
-    dkz = (kmax-kmin)
+    dkz = (kmax-kmin);
     }
  
     nk = nkx*nky*nkz;
