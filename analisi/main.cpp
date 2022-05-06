@@ -593,20 +593,22 @@ int main(int argc, char ** argv)
 
                 MediaBlocchi<Skt<double,Traiettoria>,double,double,double, double,unsigned int,unsigned int,unsigned int,unsigned int,unsigned int, unsigned int,unsigned int, bool,bool>
                         Sk(&tr,blocknumber);
-                Sk.calcola(factors_input[0],factors_input[1],factors_input[3],factors_input[2],
+                Sk.calcola(factors_input[0],factors_input[1],factors_input[2],factors_input[3],
                 skt,skt,skt,stop_acf,numero_thread,skip,every,false,dumpGK);
                 double dk = (factors_input[3]-factors_input[2])/skt ;
-
+                std::cerr<< "kmin kmax skt dk " <<std::endl ; 
+                std::cerr<<factors_input[2]<<" "<<factors_input[3]<< " " << skt << " "<< dk << std::endl ;
+ 
                 unsigned int ntyp=tr.get_ntypes()*(tr.get_ntypes()+1);
                 unsigned int tmax=Sk.media()->lunghezza()/skt/ntyp;
 
                 std::cout << Sk.puntatoreCalcolo()->get_columns_description();
                 for (unsigned int t=0;t<tmax;t+=every) {
                     for (unsigned int kx=0;kx<skt;kx++) {
-                        std::cout << t << " " << kx*dk + factors_input[2];
                         for (unsigned int ky=0;ky<skt;ky++) {
-                            std::cout << " " << ky*dk + factors_input[2] ;
                             for (unsigned int kz=0;kz<skt;kz++) {
+                               std::cout << t << " " << kx*dk + factors_input[2];
+                               std::cout << " " << ky*dk + factors_input[2] ;
                                std::cout << " " << kz*dk + factors_input[2] ;
                                for (unsigned int itype=0;itype<ntyp;itype++) {
                                    std::cout << " "<< Sk.media()->elemento(

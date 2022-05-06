@@ -128,7 +128,7 @@ void Skt<TFLOAT,T>::calc_single_th(int t, int imedia, int atom_start, int atom_s
             double x[3];
             double d2=traiettoria->d2_minImage(iatom,jatom,primo+imedia,primo+imedia+t,x);
             double d = sqrt(d2) ; 
-            if (d2>rmax2 || d2<rmin2) continue;
+//            if (d2>rmax2 || d2<rmin2) continue;
             unsigned int type1=traiettoria->get_type(iatom);
             unsigned int type2=traiettoria->get_type(jatom);
             unsigned int itype=get_itype(type1,type2);
