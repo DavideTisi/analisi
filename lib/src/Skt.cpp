@@ -155,16 +155,16 @@ void Skt<TFLOAT,T>::calc_single_th(int t, int imedia, int atom_start, int atom_s
              
             for (size_t kx = 0; kx < nkx; kx++)
                 {
-                    int kx_ = kx*dkx+kmin ;
+                    double kx_ = kx*dkx+kmin ;
                     for (size_t ky = 0; ky < nky; ky++)
                     {
-                        int ky_ = ky*dky+kmin ;
+                        double ky_ = ky*dky+kmin ;
                         for (size_t kz = 0; kz < nkz; kz++)
                         {
-                            int kz_ = kz*dkz+kmin ;
+                            double kz_ = kz*dkz+kmin ;
                             double arg=kx_*x[0]+ky_*x[1]+kz_*x[2];
                             //double c=cos(arg);
-                            th_data_[sk_idx(t,itype,kx*nky*nkz+ky*nkz+kz)]+=cos(arg);
+                            th_data_[sk_idx(t,itype,kx*nky*nkz+ky*nkz+kz)]+=cos(arg)*incr;
                         }
                     }
                 } 

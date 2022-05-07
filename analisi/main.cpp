@@ -600,7 +600,7 @@ int main(int argc, char ** argv)
                 std::cerr<<factors_input[2]<<" "<<factors_input[3]<< " " << skt << " "<< dk << std::endl ;
  
                 unsigned int ntyp=tr.get_ntypes()*(tr.get_ntypes()+1);
-                unsigned int tmax=Sk.media()->lunghezza()/skt/ntyp;
+                unsigned int tmax=Sk.media()->lunghezza()/skt/skt/skt/ntyp;
 
                 std::cout << Sk.puntatoreCalcolo()->get_columns_description();
                 for (unsigned int t=0;t<tmax;t+=every) {
