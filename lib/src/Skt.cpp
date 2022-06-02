@@ -22,37 +22,14 @@
 #include "mp.h"
 #endif
 
-template <class TFLOAT,class T> Skt<TFLOAT,T>::Skt(T *t, TFLOAT rmin, TFLOAT rmax ,TFLOAT kmin, TFLOAT kmax, unsigned int nkx ,unsigned int nky ,unsigned int nkz , unsigned int tmax, unsigned int nthreads, unsigned int skip,unsigned int every, bool onlymodule , bool debug) :
+template <class TFLOAT,class T> Skt<TFLOAT,T>::Skt(T *t, std::vector<TFLOAT> k_start, std::vector<TFLOAT> k_end, unsigned int nk , unsigned int tmax, unsigned int nthreads, unsigned int skip,unsigned int every, bool onlymodule , bool debug) :
     CalcolaMultiThread_T {nthreads, skip, t->get_natoms(), every},
-    traiettoria(t),rmin(rmin),rmax(rmax),kmin(kmin),kmax(kmax),nkx(nkx),nky(nky),nkz(nkz), lmax(tmax), onlymodule(onlymodule), debug(debug)
+    traiettoria(t),k_start(k_start),k_end(k_end),nk(nk), lmax(tmax), onlymodule(onlymodule), debug(debug)
 {
-    //totn = nkx*nky*nkz;
-    if(nkx > 0 ){
-         dkx = (kmax-kmin)/nkx ;
-    }else{
-    nkx = 1 ; 
-    dkx = kmax-kmin ;
-    }
-    
-    if(nky > 0 ){
-         dky = (kmax-kmin)/nky ;
-    }else{
-    nky = 1 ;
-    dky = (kmax-kmin);
-    }
-
-    if(nkz > 0 ){
-         dkz = (kmax-kmin)/nkz ;
-    }else{
-    nkz = 1 ;
-    dkz = (kmax-kmin);
-    }
- 
-    nk = nkx*nky*nkz;
-    //dr=(nky-nkx)/nbin;
-    //nky2=nky*nky;
-    //nkx2=nkx*nkx;
-
+    dk = 1./nk;
+    for (unsigned int t=0 ; t<3 ; t++){
+       m[t] = k_end[t] - k_start[t] ;
+    } 
 }
 
 template <class TFLOAT, class T> Skt<TFLOAT,T>::~Skt() {
@@ -69,12 +46,12 @@ template <class TFLOAT, class T> void Skt<TFLOAT,T>::reset(const unsigned int nu
     descr << "# The first column is the time difference in timesteps, then you have the kx ky kz index. Every column after is followed by the variance. Then you have the following: "<<std::endl;
     for (unsigned int t1=0;t1<traiettoria->get_ntypes();t1++) {
         for (unsigned int t2=t1;t2<traiettoria->get_ntypes();t2++){
-            descr << "#g("<<t1<<", "<<t2<<"), different atom index: "<<get_itype(t1,t2)*2+3<<std::endl;
-            descr << "#g("<<t1<<", "<<t2<<"), same atom index: "<<(get_itype(t1,t2)+traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)/2)*2+3<<std::endl;
+            descr << "#Skt("<<t1<<", "<<t2<<"), different atom index: "<<get_itype(t1,t2)*2+3<<std::endl;
+            descr << "#Skt("<<t1<<", "<<t2<<"), same atom index: "<<(get_itype(t1,t2)+traiettoria->get_ntypes()*(traiettoria->get_ntypes()+1)/2)*2+3<<std::endl;
         }
     }
     descr << "# same atom index means that the atom is tracked around and the average self-spread is shown with larger time differences."<<std::endl;
-    descr << "# different atom index is something that for t=0 is the traditional g(r) "<<std::endl;
+    descr << "# different atom index is something that for t=0 is the traditional S(k) "<<std::endl;
     c_descr=descr.str();
 
     //lunghezza in timestep
@@ -139,11 +116,16 @@ void Skt<TFLOAT,T>::calc_single_th(int t, int imedia, int atom_start, int atom_s
             //calcola il quadrato della distanza della minima immagine
             //aggiorna l'istogramma
             if(debug){
-                for (size_t k = 0; k < nk; k++)
+                for (size_t ik = 0; ik < nk; ik++)
                 {
-                    int k_ = k*dkx+kmin ; //BUG in dkx
-                    double kd = k_ * d;
-                    th_data_[sk_idx(t,itype,k)]+=sin(kd)/kd;
+                    double kd=0. ; 
+                    for (size_t idir = 0; idir < 3; idir++)
+                    {
+                        double tmp = k_start[idir] + ik * dk * m[idir] ; 
+                        kd += tmp*tmp ; 
+                    }
+                    kd = sqrt(kd) * d;
+                    th_data_[sk_idx(t,itype,ik)]+=sin(kd)/kd*incr;
                 }
             }
             /* for (size_t k = 0; k < nk; k++)
@@ -153,21 +135,16 @@ void Skt<TFLOAT,T>::calc_single_th(int t, int imedia, int atom_start, int atom_s
                     th_data_[sk_idx(t,itype,k)] += cos (kd)
                 }*/
              
-            for (size_t kx = 0; kx < nkx; kx++)
-                {
-                    double kx_ = kx*dkx+kmin ;
-                    for (size_t ky = 0; ky < nky; ky++)
+            for (unsigned int ik = 0; ik < nk; ik++){
+                    double arg=0. ; 
+                    for (unsigned int idir = 0; idir < 3; idir++)
                     {
-                        double ky_ = ky*dky+kmin ;
-                        for (size_t kz = 0; kz < nkz; kz++)
-                        {
-                            double kz_ = kz*dkz+kmin ;
-                            double arg=kx_*x[0]+ky_*x[1]+kz_*x[2];
-                            //double c=cos(arg);
-                            th_data_[sk_idx(t,itype,kx*nky*nkz+ky*nkz+kz)]+=cos(arg)*incr;
-                        }
+                        arg +=(k_start[idir] + ik * dk * m[idir])*x[idir] ; 
                     }
-                } 
+                    th_data_[sk_idx(t,itype,ik)]+=cos(arg)*incr;
+            }
+                 
+            
         }
     }
 

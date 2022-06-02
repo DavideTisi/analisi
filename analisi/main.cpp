@@ -584,51 +584,47 @@ int main(int argc, char ** argv)
                 }
 
             }else if (skt >0) {
-                if (factors_input.size()!=4){
-                    throw std::runtime_error("You have to specify the distance and k range with the option -F. In order rmin rmax kmin kmax. \n");
+                if (factors_input.size()!=6){
+                    throw std::runtime_error("You have to specify the starting and ending k for the line with the option -F. In order kx_start ky_start kz_start kx_end ky_end kz_end. \n");
                 }
                 std::cerr << "Calculation of S(k,t) -- Structure factor \n";
                 Traiettoria tr(input);
                 tr.set_pbc_wrap(true); //è necessario impostare le pbc per far funzionare correttamente la distanza delle minime immagini
+                std::vector<double> k_start ={factors_input[0],factors_input[1],factors_input[2]} ;
+                std::vector<double> k_end = {factors_input[3],factors_input[4],factors_input[5]} ;
 
-                MediaBlocchi<Skt<double,Traiettoria>,double,double,double, double,unsigned int,unsigned int,unsigned int,unsigned int,unsigned int, unsigned int,unsigned int, bool,bool>
+                //MediaBlocchi<Skt<double,Traiettoria>,double,double,double, double,unsigned int,unsigned int,unsigned int,unsigned int,unsigned int, unsigned int,unsigned int, bool,bool>
+                MediaBlocchi<Skt<double,Traiettoria>,std::vector<double>,std::vector<double>,unsigned int,unsigned int,unsigned int, unsigned int,unsigned int, bool,bool>
                         Sk(&tr,blocknumber);
-                Sk.calcola(factors_input[0],factors_input[1],factors_input[2],factors_input[3],
-                skt,skt,skt,stop_acf,numero_thread,skip,every,false,dumpGK);
-                double dk = (factors_input[3]-factors_input[2])/skt ;
-                std::cerr<< "kmin kmax skt dk " <<std::endl ; 
-                std::cerr<<factors_input[2]<<" "<<factors_input[3]<< " " << skt << " "<< dk << std::endl ;
+                Sk.calcola(k_start,k_end,skt,stop_acf,numero_thread,skip,every,false,dumpGK);
+                std::vector<double> m (3); 
+                for (unsigned int t=0 ; t<3 ; t++){
+                   m[t] = k_end[t] - k_start[t];
+                } 
  
                 unsigned int ntyp=tr.get_ntypes()*(tr.get_ntypes()+1);
-                unsigned int tmax=Sk.media()->lunghezza()/skt/skt/skt/ntyp;
+                unsigned int tmax=Sk.media()->lunghezza()/skt/ntyp;
 
                 std::cout << Sk.puntatoreCalcolo()->get_columns_description();
                 for (unsigned int t=0;t<tmax;t+=every) {
-                    for (unsigned int kx=0;kx<skt;kx++) {
-                        for (unsigned int ky=0;ky<skt;ky++) {
-                            for (unsigned int kz=0;kz<skt;kz++) {
-                               std::cout << t << " " << kx*dk + factors_input[2];
-                               std::cout << " " << ky*dk + factors_input[2] ;
-                               std::cout << " " << kz*dk + factors_input[2] ;
+                    for (unsigned int ik=0; ik<skt;ik++) {
+                            std::cout << t ;
+                            for (unsigned int idir=0;idir<3;idir++) {
+                               std::cout << " " << k_start[idir] + ik * m[idir]/skt ;
+                            }
                                for (unsigned int itype=0;itype<ntyp;itype++) {
                                    std::cout << " "<< Sk.media()->elemento(
-                                                    t*ntyp*skt*skt*skt +
-                                                      itype* skt*skt*skt +
-                                                              kx*skt*skt +
-                                                                  ky*skt +
-                                                                      kz 
+                                                    t*ntyp*skt +
+                                                      itype* skt +
+                                                              ik
                                                     )
                                              << " "<< Sk.varianza()->elemento(
-                                                    t*ntyp*skt*skt*skt +
-                                                      itype* skt*skt*skt +
-                                                              kx*skt*skt +
-                                                                  ky*skt +
-                                                                      kz 
+                                                    t*ntyp*skt +
+                                                      itype* skt +
+                                                              ik 
                                                     );
                                }
                                std::cout << "\n";
-                            }
-                        }      
                     }
                     std::cout << "\n\n";
                 }

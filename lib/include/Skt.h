@@ -35,18 +35,14 @@ public:
     using OperazioniSuLista_T = OperazioniSuLista<This,TFLOAT>;
 
     Skt(T *t,
-          TFLOAT rmin,
-          TFLOAT rmax,
-          TFLOAT kmin,
-          TFLOAT kmax,
-          unsigned int nkx,
-          unsigned int nky,
-          unsigned int nkz,
+          std::vector<TFLOAT> k_start,
+          std::vector<TFLOAT> k_end,
+          unsigned int nk,
           unsigned int tmax=0,
           unsigned int nthreads=0,
           unsigned int skip=1, 
           unsigned int every=1,
-          bool onlymodule=true ,
+          bool onlymodule=false ,
           bool debug=false);
     ~Skt();
     void reset(const unsigned int numeroTimestepsPerBlocco);
@@ -65,12 +61,14 @@ private:
     using OperazioniSuLista_T::lista;
     using OperazioniSuLista_T::lunghezza_lista;
     TFLOAT * th_data;
-    TFLOAT rmin,rmax,rmax2,rmin2,dr,incr,kmin,kmax;
+    TFLOAT incr;
     bool debug,onlymodule;
     T * traiettoria;
-    unsigned int nk, nkx,nky,nkz,lmax;
+    unsigned int nk,lmax;
     unsigned int totn ; 
-    TFLOAT dkx,dky,dkz ; 
+    TFLOAT dk ;
+    std::vector<TFLOAT> k_start , k_end ;
+    TFLOAT m[3] ;  
 
     using CalcolaMultiThread_T::ntimesteps;
     using CalcolaMultiThread_T::skip;
